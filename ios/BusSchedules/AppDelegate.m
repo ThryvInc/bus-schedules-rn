@@ -11,17 +11,19 @@
 
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTRootView.h>
-@import GoogleMaps;
+#import <Fabric/Fabric.h>
+#import <Crashlytics/Crashlytics.h>
+@import SBNag_swift;
 
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+  [Fabric with:@[[Crashlytics class]]];
+
   NSURL *jsCodeLocation;
 
   jsCodeLocation = [[RCTBundleURLProvider sharedSettings] jsBundleURLForBundleRoot:@"index.ios" fallbackResource:nil];
-  
-  [GMSServices provideAPIKey:@"AIzaSyDFcurEvB3Q1aDi1m0f7Kx9LSLNicg4A9E"];
 
   RCTRootView *rootView = [[RCTRootView alloc] initWithBundleURL:jsCodeLocation
                                                       moduleName:@"BusSchedules"
@@ -30,6 +32,21 @@
   rootView.backgroundColor = [[UIColor alloc] initWithRed:1.0f green:1.0f blue:1.0f alpha:1];
 
   self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+  
+  SBNagService *nag = [SBNagService new];
+  
+  SBNagtion *rateNagtion = [SBNagtion new];
+  rateNagtion.defaultsKey = @"rate";
+  rateNagtion.title = @"Sorry to interrupt...";
+  rateNagtion.message = @"...but would you mind rating this app?";
+  rateNagtion.noText = @"Nope, I'll never rate this app";
+  rateNagtion.yesAction = ^void(){
+    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://itunes.apple.com/us/app/bus-times-nyc-live-mta-schedules/id1227016971?ls=1&mt=8"]];
+  };
+  
+  nag.nagtions = @[rateNagtion];
+  [nag startCountDown];
+  
   UIViewController *rootViewController = [UIViewController new];
   rootViewController.view = rootView;
   self.window.rootViewController = rootViewController;

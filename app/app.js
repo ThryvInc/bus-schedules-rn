@@ -1,14 +1,22 @@
 import React, { Component } from 'react';
 import {
-  AppRegistry
+  AppRegistry, BackAndroid
 } from 'react-native';
-import { Router, Scene } from 'react-native-router-flux';
+import { Router, Scene, Actions } from 'react-native-router-flux';
 import SavedStops from './components/SavedStops.js';
 import RoutesForStop from './components/RoutesForStop.js';
 import PredictionsForRouteStop from './components/PredictionsForRouteStop.js';
 import ChooseStop from './components/ChooseStop.js';
 
 export default class App extends Component {
+
+  componentDidMount() {
+    BackAndroid.addEventListener('hardwareBackPress', () => {
+      Actions.pop({refresh:{}});
+      return true;
+    });
+  }
+
   render() {
     return (
       <Router>

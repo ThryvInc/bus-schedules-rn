@@ -7,10 +7,13 @@ import {
   InteractionManager,
   PermissionsAndroid,
   Platform } from 'react-native';
-import { Container, Header, Body, Button, Content, Title, Left, Right, Icon, Spinner } from 'native-base';
+import { Container, Header, Body, Button, Content, Title, Left, Right, Icon, StyleProvider, Spinner } from 'native-base';
+import getTheme from '../../native-base-theme/components';
+import commonColor from '../../native-base-theme/variables/commonColor';
 import { Actions } from 'react-native-router-flux';
 import StopList from './StopList.js';
 import MapView from 'react-native-maps';
+import API from '../lib/API.js';
 
 const GEOLOCATION_OPTIONS = { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 };
 
@@ -45,39 +48,36 @@ export default class ChooseStop extends Component {
           };
 
     return (
-      <Container>
-        <Header>
-          <Left>
-            <Button transparent onPress={() => Actions.pop()}>
-              <Icon name='arrow-back' />
-            </Button>
-          </Left>
-          <Body>
-            <Title>Choose a Stop</Title>
-          </Body>
-          <Right>
-            <Button transparent>
-              <Icon name='exit' />
-            </Button>
-          </Right>
-        </Header>
-        <Content>
-          <View style={{width: width, height: height/2}}>
-            <MapView style={styles.map} 
-              initialRegion={initialRegion} 
-              region={coordinates} 
-              geolocationOptions={GEOLOCATION_OPTIONS} 
-              provider="google" 
-              showsScale={true} 
-              showsUserLocation={true} >
-              { this.state.stops.map(stop => (
-                <MapView.Marker pinColor='yellow' title={stop.name} coordinate={stop.coords} key={stop.id} onPress={() => Actions.routesForStop({ stop: stop })} />
-              ))}
-            </MapView>
-          </View>
-          { this.state.loading? <Spinner /> : <StopList stops={this.state.stops} /> }
-        </Content>
-      </Container>
+      <StyleProvider style={getTheme(commonColor)}>
+        <Container>
+          <Header>
+            <Left>
+              <Button transparent onPress={() => Actions.pop({refresh:{}})}>
+                <Icon name='arrow-back' />
+              </Button>
+            </Left>
+            <Body>
+              <Title>Choose a Stop</Title>
+            </Body>
+            <Right/>
+          </Header>
+          <Content>
+            <View style={{width: width, height: height/2}}>
+              <MapView style={styles.map} 
+                initialRegion={initialRegion} 
+                region={coordinates} 
+                geolocationOptions={GEOLOCATION_OPTIONS} 
+                showsScale={true} 
+                showsUserLocation={true} >
+                { this.state.stops.map(stop => (
+                  <MapView.Marker pinColor='#a5d250' title={stop.name} coordinate={stop.coords} key={stop.id} onPress={() => Actions.routesForStop({ stop: stop })} />
+                ))}
+              </MapView>
+            </View>
+            { this.state.loading? <Spinner /> : <StopList stops={this.state.stops} /> }
+          </Content>
+        </Container>
+      </StyleProvider>
     );
   }
 
@@ -96,9 +96,10 @@ export default class ChooseStop extends Component {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         this.setState({ lastPosition: position.coords});
+        this.getStops(position.coords);
       },
-      (error) => alert(JSON.stringify(error)),
-      {timeout: 2000}
+      (error) => {if (Platform.OS === 'android') {alert(JSON.stringify(error))}},
+      {timeout: 10000}
     );
   }
 
@@ -110,25 +111,12 @@ export default class ChooseStop extends Component {
   }
 
   getStops(location) {
-    const url = "https://bustime.mta.info/api/where/stops-for-location.json?lat=" + location.latitude + "&lon=" + location.longitude + "&latSpan=0.005&lonSpan=0.005&key=c83296ce-9d58-4801-b9d9-eb1957e30f14";
-
-    fetch(url)
-      .then((response) => response.json())
-      .then((responseJson) => {
-        var stops = responseJson.data.stops.map(stopJson => {
-          return { coords: { latitude: stopJson.lat, longitude: stopJson.lon }, 
-                   name: stopJson.name, id: stopJson.id, routes: stopJson.routes };
-        });
-        this.setStops({stops: stops, loading: false })
-      })
-      .catch((error) => {
-        alert(JSON.stringify(error));
-      });
+    API.getStops(location, stops => this.setStops({stops: stops, loading: false }), 
+      error => alert(JSON.stringify(error)))
   }
 
   setStops(stopsUpdateObject) {
     this.setState(stopsUpdateObject);
-    this.forceUpdate();
   }
 
   componentWillUnmount() {

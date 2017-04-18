@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.busschedules"
+    package="com.thryvinc.nycbus"
     android:versionCode="1"
     android:versionName="1.0">
 
@@ -31,6 +31,9 @@
       <meta-data
         android:name="com.google.android.geo.API_KEY"
         android:value="AIzaSyC4JxM_qATJ-Pun3Y5IDDoUwoIeaMMuxLo"/>
+        <meta-data
+            android:name="io.fabric.ApiKey"
+            android:value="b1bc39c835159dcffd9f2950a40007e570069713" />
     </application>
 
 </manifest>
